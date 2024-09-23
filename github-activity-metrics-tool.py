@@ -6,16 +6,24 @@ import json
 from dotenv import dotenv_values
 from datetime import datetime
 
+config = dotenv_values("GW.env")
 
-config = dotenv_values(".env")
-
-institutionname = "UT Austin"
-institutionnamepermutations = ["UT Austin", "University of Texas at Austin", "UT", "University of Texas, Austin", "UT-Austin"]
+github_token = config['githubtoken']
+institutionname = config['institutionname']
 simplifiedinstitutionname = institutionname.replace(" ","-").lower().strip()
-institutioncity = "Austin"
-institutionemaildomain = "utexas.edu"
-departmentandschoollistfilepath = "inputs/departmentandschoollist.csv"
-enterprisegithublistfilepath = "inputs/ut-enterprise-github-faculty-20240214.csv"
+institutionnamepermutations = config['institutionnamepermutations'].split(';')
+institutioncity = config['institutioncity']
+institutionemaildomain = config['institutionemaildomain']
+
+print("github token: " + config['githubtoken'])
+print("institution name: " + institutionname)
+print("institution name permutations: " + str(institutionnamepermutations))
+print("institution city: " + institutioncity)
+print("institution email domain: " + institutionemaildomain)
+
+#departmentandschoollistfilepath = "inputs/departmentandschoollist.csv"
+#enterprisegithublistfilepath = "inputs/ut-enterprise-github-faculty-20240214.csv"
+
 githubaccountdetailscsvpath = "outputs/simple-github-account-url-list-" + datetime.now().strftime("%Y-%m-%d") + "-" + simplifiedinstitutionname + ".csv"
 resultsperpage = 50 #max of 50
 pagelimit = 20
@@ -25,19 +33,25 @@ detaillevel = "limiteddetail"
 
 
 
-
-
 ####EXAMPLE QUERY
 # querylist.append("firstpartofname+firstpartofname+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
 
 # update this list of queries to fit your institution
 querylist = []
-querylist.append("ut+austin+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
-querylist.append("university+of+texas+at+austin+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
-querylist.append("location:%22university+of+texas+at+austin%22&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
-querylist.append("location:\"ut+austin\"&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
-querylist.append("location%3AAustin+followers%3A%3E%3D40+repos%3A%3E%3D1&type=Users&ref=advsearch&l=&l=&s=followers&o=desc")
-querylist.append("texas+advanced+computing+center+in:bio&type=Users")
+querylist.append("george+washington+university+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+querylist.append("the+george+washington+university+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+querylist.append("gwu+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+querylist.append("location:%22george+washington+university%22&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+querylist.append("location:%22the+george+washington+university%22&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+querylist.append("location:\"gwu\"&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+
+# UT Austin specific queries
+#querylist.append("ut+austin+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+#querylist.append("university+of+texas+at+austin+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+#querylist.append("location:%22university+of+texas+at+austin%22&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+#querylist.append("location:\"ut+austin\"&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+#querylist.append("location%3AAustin+followers%3A%3E%3D40+repos%3A%3E%3D1&type=Users&ref=advsearch&l=&l=&s=followers&o=desc")
+#querylist.append("texas+advanced+computing+center+in:bio&type=Users")
 
 
 
@@ -126,7 +140,7 @@ def predictrole(parseddesc, fulldesc):
             prediction = "Alum"
 
         if "boot" in desc and "camp" in desc:
-            prediction = "UT bootcamp student"
+            prediction = "bootcamp student"
 
         if "turing" in desc and "scholar" in desc:
             prediction = "Student"
@@ -136,6 +150,23 @@ def predictrole(parseddesc, fulldesc):
 
     print("returning the following predictionlist: " + str(predictionlist))
     return predictionlist
+
+# Set up the headers with the token
+headers = {
+    'Authorization': f'token {github_token}'
+}
+
+# Make a request to the GitHub API
+response = requests.get('https://api.github.com/user', headers=headers)
+
+# Check the response
+if response.status_code == 200:
+    print("Success!")
+    print(response.json())
+else:
+    print("Failed to retrieve data")
+    print(response.status_code, response.text)
+    exit()
 
 
 csvoutputrows = []
@@ -191,6 +222,10 @@ for query in querylist:
 
 
                     print("\nchecking github account... #" + str(githubaccountschecked))
+
+                    #if githubaccountschecked > 9:
+                    #    print("exiting after 10th account.")
+                    #    exit()
 
                     utaffiliated = False
 
