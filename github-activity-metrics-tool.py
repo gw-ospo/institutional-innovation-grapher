@@ -3,37 +3,33 @@ import csv
 import pandas as pd
 import requests
 import json
+from dotenv import dotenv_values
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
+config = dotenv_values("GW.env")
 
+github_token = config['githubtoken']
+institutionname = config['institutionname']
+simplifiedinstitutionname = institutionname.replace(" ","-").lower().strip()
+institutionnamepermutations = config['institutionnamepermutations'].split(';')
+institutioncity = config['institutioncity']
+institutionemaildomain = config['institutionemaildomain']
 
+print("github token: " + config['githubtoken'])
+print("institution name: " + institutionname)
+print("institution name permutations: " + str(institutionnamepermutations))
+print("institution city: " + institutioncity)
+print("institution email domain: " + institutionemaildomain)
 
-# Check to ensure that essential repo directories exist, and create them if they do not
-if not os.path.isdir("inputs"):
-    os.mkdir("inputs")
+#departmentandschoollistfilepath = "inputs/departmentandschoollist.csv"
+#enterprisegithublistfilepath = "inputs/ut-enterprise-github-faculty-20240214.csv"
 
-if not os.path.isdir("outputs"):
-    os.mkdir("outputs")
-
-if not os.path.isdir("logs"):
-    os.mkdir("logs")
-
-if not os.path.isdir("outputs/" + datetime.now().strftime("%Y-%m-%d")):
-    os.mkdir("outputs/" + datetime.now().strftime("%Y-%m-%d"))
-
-
-
-# Open and read config parameters from .env file
-with open(".env") as envfile:
-    config = json.loads(envfile.read())
-
-
-# Modify config parameters
-simplifiedinstitutionname = config['institutionname'].replace(" ","-").lower().strip()
-config['githubaccountdetailscsvpath'] = config['githubaccountdetailscsvpath'].replace('institutionnameplaceholder',simplifiedinstitutionname).replace('dateplaceholder',datetime.now().strftime("%Y-%m-%d")).replace("detaillevelplaceholder",config['detaillevel'])
-config['githubrepodetailscsvpath'] = config['githubrepodetailscsvpath'].replace('institutionnameplaceholder',simplifiedinstitutionname).replace('dateplaceholder',datetime.now().strftime("%Y-%m-%d")).replace("lastupdatethresholdplaceholder","last" + str(config['githubrepolastupdatethresholdinmonths']) + "months")
-
+githubaccountdetailscsvpath = "outputs/simple-github-account-url-list-" + datetime.now().strftime("%Y-%m-%d") + "-" + simplifiedinstitutionname + ".csv"
+resultsperpage = 50 #max of 50
+pagelimit = 20
+minimumfollowers = 1
+minimumrepos = 1
+detaillevel = "limiteddetail"
 
 
 
@@ -42,18 +38,26 @@ config['githubrepodetailscsvpath'] = config['githubrepodetailscsvpath'].replace(
 
 # update this list of queries to fit your institution
 querylist = []
-querylist.append("ut+austin+followers:>=" + str(config['minimumfollowers']) + "+repos:>=" + str(config['minimumrepos']))
-querylist.append("university+of+texas+at+austin+followers:>=" + str(config['minimumfollowers']) + "+repos:>=" + str(config['minimumrepos']))
-querylist.append("location:%22university+of+texas+at+austin%22&followers:>=" + str(config['minimumfollowers']) + "&repos:>=" + str(config['minimumrepos']))
-querylist.append("location:\"ut+austin\"&followers:>=" + str(config['minimumfollowers']) + "&repos:>=" + str(config['minimumrepos']))
-querylist.append("location%3AAustin+followers%3A%3E%3D40+repos%3A%3E%3D1&type=Users&ref=advsearch&l=&l=&s=followers&o=desc")
-querylist.append("texas+advanced+computing+center+in:bio&type=Users")
+querylist.append("george+washington+university+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+querylist.append("the+george+washington+university+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+querylist.append("gwu+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+querylist.append("location:%22george+washington+university%22&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+querylist.append("location:%22the+george+washington+university%22&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+querylist.append("location:\"gwu\"&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+
+# UT Austin specific queries
+#querylist.append("ut+austin+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+#querylist.append("university+of+texas+at+austin+followers:>=" + str(minimumfollowers) + "+repos:>=" + str(minimumrepos))
+#querylist.append("location:%22university+of+texas+at+austin%22&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+#querylist.append("location:\"ut+austin\"&followers:>=" + str(minimumfollowers) + "&repos:>=" + str(minimumrepos))
+#querylist.append("location%3AAustin+followers%3A%3E%3D40+repos%3A%3E%3D1&type=Users&ref=advsearch&l=&l=&s=followers&o=desc")
+#querylist.append("texas+advanced+computing+center+in:bio&type=Users")
 
 
 
 githubaccountdetailscsvcolumns = []
-# if config['detaillevel'] == "fulldetail":
-githubaccountdetailscsvcolumns.append("name")
+if detaillevel == "fulldetail":
+    githubaccountdetailscsvcolumns.append("name")
 githubaccountdetailscsvcolumns.append("html_url")
 githubaccountdetailscsvcolumns.append("company")
 githubaccountdetailscsvcolumns.append("email")
@@ -62,13 +66,13 @@ githubaccountdetailscsvcolumns.append("public_repos")
 githubaccountdetailscsvcolumns.append("followers")
 githubaccountdetailscsvcolumns.append("created_at")
 githubaccountdetailscsvcolumns.append("updated_at")
-githubaccountdetailscsvcolumns.append("predicted general " + config['institutionname'] + " connection/role")
+githubaccountdetailscsvcolumns.append("predicted general " + institutionname + " connection/role")
 githubaccountdetailscsvcolumns.append("additional predicted info")
 githubaccountdetailscsvcolumns.append("query")
 githubaccountdetailscsvcolumns.append("querydate")
 
 
-
+githubrepodetailscsvpath = "outputs/simple-github-repo-url-list-" + datetime.now().strftime("%Y-%m-%d") + "-" + simplifiedinstitutionname + ".csv"
 githubrepodetailscsvcolumns = ['name','full_name','html_url','description','fork','created_at','updated_at','size','stargazers_count','watchers_count','language','forks_count','archived','disabled','open_issues_count','license','allow_forking','topics','forks','visibility','open_issues']
 
 
@@ -96,7 +100,14 @@ finalgithubrepodetailscsvrows = []
 
 
 
-
+try:
+    os.mkdir("inputs")
+except:
+    print("verified: inputs directory already exists")
+try:
+    os.mkdir("outputs")
+except:
+    print("verified: outputs directory already exists")
 
 
 
@@ -129,7 +140,7 @@ def predictrole(parseddesc, fulldesc):
             prediction = "Alum"
 
         if "boot" in desc and "camp" in desc:
-            prediction = "UT bootcamp student"
+            prediction = "bootcamp student"
 
         if "turing" in desc and "scholar" in desc:
             prediction = "Student"
@@ -140,6 +151,23 @@ def predictrole(parseddesc, fulldesc):
     print("returning the following predictionlist: " + str(predictionlist))
     return predictionlist
 
+# Set up the headers with the token
+headers = {
+    'Authorization': f'token {github_token}'
+}
+
+# Make a request to the GitHub API
+response = requests.get('https://api.github.com/user', headers=headers)
+
+# Check the response
+if response.status_code == 200:
+    print("Success!")
+    print(response.json())
+else:
+    print("Failed to retrieve data")
+    print(response.status_code, response.text)
+    exit()
+
 
 csvoutputrows = []
 csvrowdictionarylist = []
@@ -149,15 +177,12 @@ githubaccountschecked = 0
 for query in querylist:
 
     try:
-        queryurl = "https://api.github.com/search/"+ apiendpoint +"?q="+ query +"&per_page=" + str(config['resultsperpage'])
+        queryurl = "https://api.github.com/search/"+ apiendpoint +"?q="+ query +"&per_page=" + str(resultsperpage)
 
         print(queryurl)
-
         data = requests.get(queryurl, headers={"X-GitHub-Api-Version": "2022-11-28", "Authorization": "Bearer " + config['githubtoken'], "Accept": "application/vnd.github+json" })
 
         response = json.loads(data.content)
-
-        print(response)
 
         try:
             responselinkheaders = data.headers["Link"]
@@ -167,22 +192,21 @@ for query in querylist:
             lasturl = pageinfo[1].replace("<","").split(">; ")[0].strip()
             lastpagenum = lasturl.split("=")[-1]
 
-            print("total count for query '" + query + "' = " + str(response['total_count']))
+            print("total count for query '"+query+"' = " + str(response['total_count']))
             print("next page = " + nexturl)
             print("lastpage = " + lasturl)
             print()
-
         except:
             print("less than one page of results returned")
 
         pagecount = 0
 
-        while pagecount < config['pagelimit']:
+        while pagecount < pagelimit:
 
             try:
                 pagecount += 1
 
-                queryurl = "https://api.github.com/search/"+ apiendpoint +"?q="+ query +"&per_page=" + str(config['resultsperpage']) + "&page=" + str(pagecount)
+                queryurl = "https://api.github.com/search/"+ apiendpoint +"?q="+ query +"&per_page=" + str(resultsperpage) + "&page=" + str(pagecount)
 
                 print("queryurl = " + queryurl)
 
@@ -199,9 +223,13 @@ for query in querylist:
 
                     print("\nchecking github account... #" + str(githubaccountschecked))
 
+                    #if githubaccountschecked > 9:
+                    #    print("exiting after 10th account.")
+                    #    exit()
+
                     utaffiliated = False
 
-                    if str('location%3A' + config['institutioncity'] + '+') in queryurl:
+                    if str('location%3A' + institutioncity + '+') in queryurl:
 
                         for k, v in u.items():
                             if k == "url":
@@ -214,13 +242,13 @@ for query in querylist:
                                     try:
                                         if k2 == "email":
                                             print("   email: " + str(v2))
-                                            if config['institutionemaildomain'] in v2:
+                                            if institutionemaildomain in v2:
                                                 utaffiliated = True
 
                                         if k2 == "company":
                                             print("   company: " + str(v2))
 
-                                            for permutation in config['institutionnamepermutations']:
+                                            for permutation in institutionnamepermutations:
                                                 if permutation.lower() in v2.lower():
                                                     utaffiliated = True
 
@@ -229,7 +257,7 @@ for query in querylist:
 
 
 
-                    if str('location%3A' + config['institutioncity'] + '+') not in queryurl:
+                    if str('location%3A' + institutioncity + '+') not in queryurl:
 
                         useralreadyfound = False
 
@@ -238,7 +266,7 @@ for query in querylist:
                         orgaccount = False
                         for k, v in u.items():
                             if k in usercharacteristicstoprocess or "*" in usercharacteristicstoprocess:
-
+                                
                                 # print(k + ":  " + str(v))
 
                                 if k == "login":
@@ -273,7 +301,7 @@ for query in querylist:
                                                     csvrowdictionary[k2] = v2
 
                                                 elif k2 == "company":
-                                                    if config['detaillevel'] == "fulldetail":
+                                                    if detaillevel == "fulldetail":
                                                         v2 = v2.replace("@","").replace("\n","")
                                                         csvrowdictionary[k2] = v2
                                                     else:
@@ -285,7 +313,7 @@ for query in querylist:
                                                     else:
                                                         emailaddress = str(v2).replace("\n","")
 
-                                                    if config['detaillevel'] == "fulldetail":
+                                                    if detaillevel == "fulldetail":
                                                         csvrowdictionary[k2] = emailaddress
 
                                                     else:
@@ -312,18 +340,18 @@ for query in querylist:
 
                                                     institutionrole.replace("i am a ","")
 
-                                                    if config['detaillevel'] == "fulldetail":
+                                                    if detaillevel == "fulldetail":
                                                         csvrowdictionary["bio"] = v2
                                                     else:
                                                         csvrowdictionary["bio"] = ""
 
                                                     if orgaccount:
                                                         csvrow.extend(["organization",""])
-                                                        csvrowdictionary["predicted general "+ config['institutionname'] +" connection/role"] = "organization"
+                                                        csvrowdictionary["predicted general "+ institutionname +" connection/role"] = "organization"
                                                         csvrowdictionary["additional predicted info"] = ""
 
                                                     else:
-                                                        csvrowdictionary["predicted general "+ config['institutionname'] +" connection/role"] = predictrole(institutionrole, v2.lower())[0]
+                                                        csvrowdictionary["predicted general "+ institutionname +" connection/role"] = predictrole(institutionrole, v2.lower())[0]
                                                         csvrowdictionary["additional predicted info"] = predictrole(institutionrole, v2.lower())[1]
                                                         csvrow.extend(predictrole(institutionrole, v2.lower()))
 
@@ -347,81 +375,60 @@ for query in querylist:
 
                                                     for reponum, repo in enumerate(reposdatalist):
                                                         keycount = 0
-                                                        print("       Data for repo #" + str(reponum + 1) + " out of " + str(len(reposdatalist)))
+                                                        print("    Data for repo #" + str(reponum + 1) + " out of " + str(len(reposdatalist)))
                                                         repocsvrow = []
 
-                                                        processrepo = False
+                                                        for k2, v2 in repo.items():
 
+                                                            if k2 in repocharacteristicstoprocess:
 
-                                                        yearofmostrecentupdate = int(repo['updated_at'].lower().split("t")[0].split("-")[0])
-                                                        monthofmostrecentupdate = int(repo['updated_at'].lower().split("t")[0].split("-")[1])
-                                                        dayofmostrecentupdate = int(repo['updated_at'].lower().split("t")[0].split("-")[2])
+                                                                try:
+                                                                    license = ""
+                                                                    if repo['html_url'] not in uniquerepolist:
+                                                                        keycount += 1
 
-                                                        # Example time: 2021-04-24T15:13:29Z
-                                                        datetimeofmostrecentupdate = datetime.strptime(repo['updated_at'], '%Y-%m-%dT%H:%M:%SZ')
+                                                                        print("        " + str(keycount) + "  " +  k2 + ": " + str(v2))
 
-                                                        monthssincemostrecentupdate = (float(relativedelta(datetime.now(), datetimeofmostrecentupdate).years)*12) + float(relativedelta(datetime.now(), datetimeofmostrecentupdate).months)
-                                                        print("       LAST UPDATE DATE: " + repo['updated_at'])
-                                                        print("       REPO LAST UPDATED " + str(monthssincemostrecentupdate) + " MONTHS AGO")
+                                                                        if k2 == "language":
+                                                                            repolanguagelist.append(str(v2))
+                                                                            repocsvrow.append(str(v2))
 
-                                                        if monthssincemostrecentupdate < config['githubrepolastupdatethresholdinmonths']:
-                                                            processrepo = True
-
-
-                                                            for k2, v2 in repo.items():
-
-                                                                if k2 in repocharacteristicstoprocess:
-
-                                                                    try:
-                                                                        license = ""
-
-
-
-                                                                        if repo['html_url'] not in uniquerepolist:
-                                                                            keycount += 1
-
-                                                                            print("            " + str(keycount) + "  " +  k2 + ": " + str(v2))
-
-                                                                            if k2 == "language":
-                                                                                repolanguagelist.append(str(v2))
-                                                                                repocsvrow.append(str(v2))
-
-                                                                            elif k2 == "license":
-                                                                                if v2 == "None":
-                                                                                    license = "None"
-                                                                                    repolicenselist.append("None")
-                                                                                    repocsvrow.append("None")
-                                                                                else:
-                                                                                    repolicenselist.append(v2['name'])
-                                                                                    repocsvrow.append(v2['name'])
-                                                                                    license = v2['name']
-
-                                                                            elif k2 == "stargazers_count":
-                                                                                repostargazerlist.append(v2)
-                                                                                repocsvrow.append(v2)
-
-                                                                            elif k2 == "watchers_count":
-                                                                                repowatcherlist.append(v2)
-
-                                                                                repocsvrow.append(v2)
-
-                                                                            elif k2 == "forks":
-                                                                                repoforklist.append(v2)
-
-                                                                                repocsvrow.append(v2)
-
+                                                                        elif k2 == "license":
+                                                                            if v2 == "None":
+                                                                                license = "None"
+                                                                                repolicenselist.append("None")
+                                                                                repocsvrow.append("None")
                                                                             else:
-                                                                                repocsvrow.append(v2)
-                                                                    except:
-                                                                        pass
+                                                                                repolicenselist.append(v2['name'])
+                                                                                repocsvrow.append(v2['name'])
+                                                                                license = v2['name']
 
-                                                            print(str(len(repocsvrow)) + "   " + str(repocsvrow))
+                                                                        elif k2 == "stargazers_count":
+                                                                            repostargazerlist.append(v2)
+                                                                            repocsvrow.append(v2)
 
-                                                            #if licensing information not provided, add default license value of ""
-                                                            if len(repocsvrow) < 21:
-                                                                repocsvrow.insert(15,license)
+                                                                        elif k2 == "watchers_count":
+                                                                            repowatcherlist.append(v2)
 
-                                                            finalgithubrepodetailscsvrows.append(repocsvrow)
+                                                                            repocsvrow.append(v2)
+
+                                                                        elif k2 == "forks":
+                                                                            repoforklist.append(v2)
+
+                                                                            repocsvrow.append(v2)
+
+                                                                        else:
+                                                                            repocsvrow.append(v2)
+                                                                except:
+                                                                    pass
+
+                                                        print(str(len(repocsvrow)) + "   " + str(repocsvrow))
+
+                                                        #if licensing information not provided, add default license value of ""
+                                                        if len(repocsvrow) < 21:
+                                                            repocsvrow.insert(15,license)
+
+                                                        finalgithubrepodetailscsvrows.append(repocsvrow)
                                                         print("\n\n")
 
                                                 except Exception as e:
@@ -505,10 +512,10 @@ for obj in csvrowdictionarylist:
 
 
 
-print("\n\n" + "preparing to generate " + config['githubaccountdetailscsvpath'])
-print("estimated valid rows to create in GitHub account details CSV: " + str(len(finalgithubaccountdetailscsvrows)))
+print("\n\n" + "preparing to generate " + githubaccountdetailscsvpath)
+print("estimated valid rows to create in GitHub account details CSV: " + str(len(csvoutputrows)))
 
-with open(config['githubaccountdetailscsvpath'],"w", newline="") as opencsv:
+with open(githubaccountdetailscsvpath,"w", newline="") as opencsv:
 
     csvwriter = csv.writer(opencsv)
 
@@ -525,14 +532,13 @@ with open(config['githubaccountdetailscsvpath'],"w", newline="") as opencsv:
 
 
 
-print("\n\n" + "preparing to generate " + config['githubrepodetailscsvpath'])
-print("estimated valid rows to create in GitHub repo details CSV: " + str(len(finalgithubrepodetailscsvrows)))
+print("\n\n" + "preparing to generate " + githubrepodetailscsvpath)
+print("estimated valid rows to create in GitHub repo details CSV: " + str(len(csvoutputrows)))
 
 topstarredrepos = []
 topwatchedrepos = []
 topforkedrepos = []
-
-with open(config['githubrepodetailscsvpath'],"w", newline="") as opencsv:
+with open(githubrepodetailscsvpath,"w", newline="") as opencsv:
 
     csvwriter = csv.writer(opencsv)
 
