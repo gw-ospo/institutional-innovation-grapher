@@ -48,7 +48,22 @@ querylist.append("location:%22george+washington+university%22&followers:>=" + st
 querylist.append("location:\"gwu\"&followers:>=" + str(config['minimumfollowers']) + "&repos:>=" + str(config['minimumrepos']))
 querylist.append("location%3AWashington%2C+D.C.+followers%3A%3E%3D40+repos%3A%3E%3D1&type=Users&ref=advsearch&l=&l=&s=followers&o=desc")
 querylist.append("george+washington+university+in:bio&type=Users")
+querylist.append("the+george+washington+university")
+querylist.append("The+George+Washington+University")
+querylist.append("George+Washington+University")
+querylist.append("GWU")
+querylist.append("GW")
+querylist.append("george+washington+univ")
+# querylist.append("George+Washington+University+in:readme")
+# querylist.append("GWU+in:company&type=Users")
+# querylist.append("gwu+in:company&type=Users")
+# querylist.append("george+washington+university+in:company&type=Users")
+# querylist.append("George Washington University+in:company&type=Users")
+# Add these to your querylist for company field searches:
 
+# Broader search without quotes (will find partial matches)
+# querylist.append("george+washington+university+in:company+followers:>=" + str(config['minimumfollowers']) + "+repos:>=" + str(config['minimumrepos']))
+# querylist.append("gwu+in:company+followers:>=" + str(config['minimumfollowers']) + "+repos:>=" + str(config['minimumrepos']))
 
 
 githubaccountdetailscsvcolumns = []
