@@ -6,6 +6,9 @@ This repository contains scripts for collecting and analyzing data about open so
 
 The vision for this repository is to build out a set of Python scripts that can effectively be utilized by open source program offices to gain a better understanding of their specific institution. See details below about specific tools.
 
+### github-repository-license-tool.py
+This script identifies open source repositories associated with George Washington University students and affiliates by searching for GitHub users who mention the institution in their profiles. It analyzes each user's public repositories to check for the presence of a license file and recent activity (commits or issues within the last six months). Qualifying repositories are saved to a JSON file and summarized in the console output. The script requires a GitHub personal access token for higher API rate limits, which should be specified in the .env file.
+
 ### github-activity-metrics-tool.py
 
 This script is designed to gather data about GitHub accounts which mention the specified institution in the "bio" statement associated with the account and save that information in a CSV (simple-github-account-url-list-[year]-[month]-[day]-[institutionname].csv). In addition to gathering summary information about each account, it has been developed with a specific focus on gathering data about the open source activity of university research communities and uses the provided "bio" information associated with each account to make a prediction about type of affiliation with the defined university. The script is also able to gather information about the individual GitHub repositories under each account and saves information about those repositories to a separate CSV file (simple-github-repo-url-list-[year]-[month]-[day]-[institutionname].csv). In order for the script to be used successfully, important parameter information must be defined in the repository's .env file. See section below for more details about preparing the .env file.
@@ -13,6 +16,23 @@ This script is designed to gather data about GitHub accounts which mention the s
 ### github-data-visualizer.py
 
 This script creates visualizations of the CSV formatted data that is collected using github-activity-metrics-tool.py. The path to the GitHub account information CSV and GitHub repo CSV needs to be defined in the repositories .env file for the script to run successfully.
+
+### gw_open_source_repos.json
+This json file is the output from github-repository-license-tool.py that has all the open source repositories in George Washington University. The number may vary based on when you are running the code. Here is a complete description of each field in this json file.
+- owner = The owner of the repository which has github username
+- repository name =  The repository that is flagged as open source project,
+- full_name = The full name of repository like juanklopper/TutorialData,
+- description = The About section of the repository,
+- html_url = The public url of the repository,
+- language = The primary programming language in which the repository is buid,
+- stars = The number of stars to that repository,
+- forks = The number of forks to that repository,
+- updated_at = Latest date of when it was updated,
+- has_license = Boolean to see if the repository has license,
+- recent_commits = Boolean to see if the repository has recent commits,
+- recent_issues = Boolean to see if the repository had any recent issues.
+
+
 
 ### Configuring the .env file
 
