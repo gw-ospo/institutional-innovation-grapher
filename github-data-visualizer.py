@@ -18,7 +18,7 @@ createdatdata = []
 updatedatdata = []
 
 
-with open(config["githubrepodatacsvpathforvisualization"], "r") as repodatacsv:
+with open('/Users/sunilshah/Development/OSPO/institutional-innovation-grapher/outputs/github-repo-list-george-washington-university-2025-09-11-last24months.csv', "r") as repodatacsv:
     repodata = csv.reader(repodatacsv)
 
     for row in repodata:
