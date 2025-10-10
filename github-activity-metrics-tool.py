@@ -146,9 +146,12 @@ def predictrole(parseddesc, fulldesc):
         if "boot" in desc and "camp" in desc:
             prediction = "GWU bootcamp student"
 
-        if "turing" in desc and "scholar" in desc:
-            prediction = "Student"
-            additionalinfo += "Undergraduate student (Turing Scholar)"
+        
+        if "lab" in desc or "laboratory" in desc:
+            prediction = "Research Laboratory"
+            additionalinfo += "GWU Research Laboratory"
+
+
 
     predictionlist = [prediction,additionalinfo]
 
